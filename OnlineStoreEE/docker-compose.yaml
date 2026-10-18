@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:18.6
+    environment:
+      POSTGRES_DB: ${STORE_DB_NAME:-store_db}
+      POSTGRES_USER: ${STORE_DB_USER:-store_user}
+      POSTGRES_PASSWORD: ${STORE_DB_PASSWORD:?Set STORE_DB_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8.10.1
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    environment:
+      STORE_DB_URL: jdbc:postgresql://db:5432/${STORE_DB_NAME:-store_db}
+      STORE_DB_USER: ${STORE_DB_USER:-store}
+      STORE_DB_PASSWORD: ${STORE_DB_PASSWORD:?Set STORE_DB_PASSWORD in .env}
+      STORE_UPLOAD_DIR: /data/uploads
+      STORE_REDIS_HOST: redis
+      STORE_REDIS_PORT: "6379"
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    volumes:
+      - uploads_data:/data/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:

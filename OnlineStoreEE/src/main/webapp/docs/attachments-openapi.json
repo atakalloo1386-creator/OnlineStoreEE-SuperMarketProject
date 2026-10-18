@@ -1,0 +1,348 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MFT Online Store — Attachments API",
+    "version": "1.0.0",
+    "description": "Attachment metadata and raw file upload/download. JSON results use ApiResponse. Role requirements describe the annotations; the server must enforce them."
+  },
+  "servers": [{"url":"../api/v1","description":"This application's context path"}],
+  "tags": [
+    {
+      "name": "Attachments",
+      "description": "Shared attachments identified by ownerType and ownerId. The owner reference is not checked against another module."
+    }
+  ],
+  "paths": {
+    "/attachments": {
+      "get": {
+        "tags": ["Attachments"],
+        "operationId": "listAttachments",
+        "summary": "List attachment metadata",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/AttachmentListResponse"}}}
+          },
+          "400": {"$ref":"#/components/responses/BadRequest"},
+          "404": {
+            "description": "Invalid ownerType query value",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/ErrorResponse"}}}
+          },
+          "500": {"$ref":"#/components/responses/ServerError"}
+        },
+        "description": "Only when both ownerType and ownerId are supplied is the result filtered. If either is missing, all attachments are returned. Soft-deleted records are excluded.",
+        "parameters": [
+          {
+            "name": "ownerType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["PRODUCT","USER","ORGANIZATION","BRANCH","TICKET","TICKET_MESSAGE","PAYMENT","ORDER"]
+            }
+          },
+          {"name":"ownerId","in":"query","schema":{"type":"integer","format":"int64"}}
+        ]
+      },
+      "post": {
+        "tags": ["Attachments"],
+        "operationId": "createAttachment",
+        "summary": "Create metadata before uploading a file",
+        "responses": {
+          "201": {
+            "description": "Successful response",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/AttachmentResponse"}}}
+          },
+          "400": {"$ref":"#/components/responses/BadRequest"},
+          "401": {"$ref":"#/components/responses/Unauthorized"},
+          "403": {"$ref":"#/components/responses/Forbidden"},
+          "409": {"$ref":"#/components/responses/Conflict"},
+          "500": {"$ref":"#/components/responses/ServerError"}
+        },
+        "security": [{"basicAuth":[]}],
+        "description": "Requires the admin role. An existing active attachment with the same owner and fileName causes a conflict.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref":"#/components/schemas/AttachmentRequest"},
+              "example": {
+                "ownerType": "PRODUCT",
+                "ownerId": 1,
+                "title": "Product image",
+                "fileName": "product.png",
+                "description": "Main image",
+                "keywords": "product,image"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attachments/page": {
+      "get": {
+        "tags": ["Attachments"],
+        "operationId": "pageAttachments",
+        "summary": "List metadata with pagination",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/AttachmentPageResponse"}}}
+          },
+          "400": {"$ref":"#/components/responses/BadRequest"},
+          "500": {"$ref":"#/components/responses/ServerError"}
+        },
+        "parameters": [
+          {"name":"page","in":"query","schema":{"type":"integer","minimum":0,"default":0}},
+          {"name":"size","in":"query","schema":{"type":"integer","minimum":1,"maximum":100,"default":10}}
+        ]
+      }
+    },
+    "/attachments/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Attachment identifier",
+          "schema": {"type":"integer","format":"int64","minimum":1}
+        }
+      ],
+      "get": {
+        "tags": ["Attachments"],
+        "operationId": "getAttachment",
+        "summary": "Get metadata by ID",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/AttachmentResponse"}}}
+          },
+          "400": {"$ref":"#/components/responses/BadRequest"},
+          "404": {"$ref":"#/components/responses/NotFound"},
+          "500": {"$ref":"#/components/responses/ServerError"}
+        }
+      },
+      "put": {
+        "tags": ["Attachments"],
+        "operationId": "updateAttachment",
+        "summary": "Replace editable metadata",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/AttachmentResponse"}}}
+          },
+          "400": {"$ref":"#/components/responses/BadRequest"},
+          "401": {"$ref":"#/components/responses/Unauthorized"},
+          "403": {"$ref":"#/components/responses/Forbidden"},
+          "404": {"$ref":"#/components/responses/NotFound"},
+          "409": {"$ref":"#/components/responses/Conflict"},
+          "500": {"$ref":"#/components/responses/ServerError"}
+        },
+        "security": [{"basicAuth":[]}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref":"#/components/schemas/AttachmentRequest"},
+              "example": {
+                "ownerType": "PRODUCT",
+                "ownerId": 1,
+                "title": "Product image",
+                "fileName": "product.png",
+                "description": "Main image",
+                "keywords": "product,image"
+              }
+            }
+          }
+        },
+        "description": "Requires role: admin."
+      },
+      "delete": {
+        "tags": ["Attachments"],
+        "operationId": "deleteAttachment",
+        "summary": "Soft-delete an attachment",
+        "description": "Requires admin. The metadata is hidden; the file remains on disk.",
+        "security": [{"basicAuth":[]}],
+        "responses": {
+          "204": {"description":"Deleted successfully; empty body"},
+          "400": {"$ref":"#/components/responses/BadRequest"},
+          "401": {"$ref":"#/components/responses/Unauthorized"},
+          "403": {"$ref":"#/components/responses/Forbidden"},
+          "404": {"$ref":"#/components/responses/NotFound"},
+          "500": {"$ref":"#/components/responses/ServerError"}
+        }
+      }
+    },
+    "/attachments/{id}/content": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Attachment identifier",
+          "schema": {"type":"integer","format":"int64","minimum":1}
+        }
+      ],
+      "put": {
+        "tags": ["Attachments"],
+        "operationId": "uploadAttachmentContent",
+        "summary": "Upload or replace the raw file",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/AttachmentResponse"}}}
+          },
+          "400": {"$ref":"#/components/responses/BadRequest"},
+          "401": {"$ref":"#/components/responses/Unauthorized"},
+          "403": {"$ref":"#/components/responses/Forbidden"},
+          "404": {"$ref":"#/components/responses/NotFound"},
+          "500": {"$ref":"#/components/responses/ServerError"}
+        },
+        "security": [{"basicAuth":[]}],
+        "description": "Requires attachment:file. Send the file bytes directly, not multipart/form-data. Content-Type is stored with the file; application/octet-stream is used if absent. Create metadata first.",
+        "requestBody": {"required":true,"content":{"application/octet-stream":{"schema":{"type":"string","format":"binary"}}}}
+      },
+      "get": {
+        "tags": ["Attachments"],
+        "operationId": "downloadAttachmentContent",
+        "summary": "Download the raw file",
+        "description": "Requires attachment:file. The response uses the stored Content-Type and a UTF-8 filename. No JSON envelope is applied, even for a JSON file.",
+        "security": [{"basicAuth":[]}],
+        "responses": {
+          "200": {
+            "description": "File bytes",
+            "headers": {
+              "Content-Length": {"schema":{"type":"integer","format":"int64"}},
+              "Content-Disposition": {"schema":{"type":"string"},"example":"attachment; filename*=UTF-8''product.png"}
+            },
+            "content": {"*/*":{"schema":{"type":"string","format":"binary"}}}
+          },
+          "400": {"$ref":"#/components/responses/BadRequest"},
+          "401": {"$ref":"#/components/responses/Unauthorized"},
+          "403": {"$ref":"#/components/responses/Forbidden"},
+          "404": {"$ref":"#/components/responses/NotFound"},
+          "500": {"$ref":"#/components/responses/ServerError"}
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "Supply credentials for protected operations. A Basic scheme cannot express role names; each operation documents its declared role."
+      }
+    },
+    "schemas": {
+      "AttachmentRequest": {
+        "type": "object",
+        "required": ["ownerType","ownerId","title","fileName"],
+        "properties": {
+          "ownerType": {"$ref":"#/components/schemas/AttachmentOwnerType"},
+          "ownerId": {"type":"integer","format":"int64","minimum":1},
+          "title": {"type":"string","minLength":1,"maxLength":100},
+          "fileName": {"type":"string","minLength":1,"maxLength":255},
+          "description": {"type":"string","maxLength":500,"nullable":true},
+          "keywords": {"type":"string","maxLength":500,"nullable":true}
+        }
+      },
+      "AttachmentDto": {
+        "type": "object",
+        "required": ["id","ownerType","ownerId","title","fileName"],
+        "properties": {
+          "ownerType": {"$ref":"#/components/schemas/AttachmentOwnerType"},
+          "ownerId": {"type":"integer","format":"int64","minimum":1},
+          "title": {"type":"string","minLength":1,"maxLength":100},
+          "fileName": {"type":"string","minLength":1,"maxLength":255},
+          "description": {"type":"string","maxLength":500,"nullable":true},
+          "keywords": {"type":"string","maxLength":500,"nullable":true},
+          "id": {"type":"integer","format":"int64","readOnly":true},
+          "contentType": {"type":"string","nullable":true,"readOnly":true},
+          "fileSize": {"type":"integer","format":"int64","nullable":true,"readOnly":true}
+        }
+      },
+      "AttachmentResponse": {
+        "type": "object",
+        "required": ["success","status","data","timestamp"],
+        "properties": {
+          "success": {"type":"boolean","enum":[true]},
+          "status": {"type":"integer"},
+          "data": {"$ref":"#/components/schemas/AttachmentDto"},
+          "timestamp": {"type":"string","format":"date-time"}
+        }
+      },
+      "AttachmentListResponse": {
+        "type": "object",
+        "required": ["success","status","data","timestamp"],
+        "properties": {
+          "success": {"type":"boolean","enum":[true]},
+          "status": {"type":"integer"},
+          "data": {"type":"array","items":{"$ref":"#/components/schemas/AttachmentDto"}},
+          "timestamp": {"type":"string","format":"date-time"}
+        }
+      },
+      "AttachmentPageResponse": {
+        "type": "object",
+        "required": ["success","status","data","timestamp"],
+        "properties": {
+          "success": {"type":"boolean","enum":[true]},
+          "status": {"type":"integer"},
+          "data": {"$ref":"#/components/schemas/AttachmentPage"},
+          "timestamp": {"type":"string","format":"date-time"}
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["success","status","timestamp"],
+        "properties": {
+          "success": {"type":"boolean","enum":[false]},
+          "status": {"type":"integer"},
+          "message": {"type":"string","nullable":true},
+          "errors": {"type":"array","nullable":true,"items":{"type":"string"}},
+          "timestamp": {"type":"string","format":"date-time"}
+        }
+      },
+      "AttachmentOwnerType": {
+        "type": "string",
+        "enum": ["PRODUCT","USER","ORGANIZATION","BRANCH","TICKET","TICKET_MESSAGE","PAYMENT","ORDER"]
+      },
+      "AttachmentPage": {
+        "type": "object",
+        "required": ["content","page","size","totalElements","totalPages"],
+        "properties": {
+          "content": {"type":"array","items":{"$ref":"#/components/schemas/AttachmentDto"}},
+          "page": {"type":"integer"},
+          "size": {"type":"integer"},
+          "totalElements": {"type":"integer","format":"int64"},
+          "totalPages": {"type":"integer"}
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Malformed JSON or validation failure",
+        "content": {"application/json":{"schema":{"$ref":"#/components/schemas/ErrorResponse"}}}
+      },
+      "Unauthorized": {
+        "description": "Authentication required (when security is configured)",
+        "content": {"application/json":{"schema":{"$ref":"#/components/schemas/ErrorResponse"}}}
+      },
+      "Forbidden": {
+        "description": "Required role missing (when security is configured)",
+        "content": {"application/json":{"schema":{"$ref":"#/components/schemas/ErrorResponse"}}}
+      },
+      "NotFound": {
+        "description": "Attachment not found or no file content",
+        "content": {"application/json":{"schema":{"$ref":"#/components/schemas/ErrorResponse"}}}
+      },
+      "Conflict": {
+        "description": "Active fileName already used for this owner",
+        "content": {"application/json":{"schema":{"$ref":"#/components/schemas/ErrorResponse"}}}
+      },
+      "ServerError": {
+        "description": "Unexpected server error",
+        "content": {"application/json":{"schema":{"$ref":"#/components/schemas/ErrorResponse"}}}
+      }
+    }
+  }
+}

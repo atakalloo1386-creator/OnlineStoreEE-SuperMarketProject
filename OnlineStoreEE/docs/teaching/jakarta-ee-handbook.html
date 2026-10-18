@@ -1,0 +1,1562 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="احمد مصباح">
+<meta name="description" content="جزوه آموزشی معماری Mapper Cache Security و اجزای پروژه Jakarta EE">
+<title>جزوه آموزشی Jakarta EE - احمد مصباح</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; }
+html { color: #172634; background: #e9edf0; }
+body { margin: 0; font-family: Tahoma, "Noto Naskh Arabic", sans-serif; font-size: 13.2px; line-height: 1.75; }
+.page { position: relative; width: 210mm; height: 297mm; margin: 12mm auto; padding: 15mm 18mm 20mm; background: #fff; break-after: page; }
+.page:last-child { break-after: auto; }
+header { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 10px; color: #566776; padding-bottom: 8px; border-bottom: 1px solid #dce3e8; margin-bottom: 14px; }
+header span:first-child { direction: ltr; unicode-bidi: isolate; }
+main { display: flow-root; }
+h1 { font-size: 37px; line-height: 1.8; color: #172634; margin: 0 0 25px; }
+h2 { font-size: 21px; line-height: 1.7; color: #172634; margin: 0 0 12px; }
+h3 { font-size: 15px; line-height: 1.8; color: #176168; margin: 14px 0 5px; }
+p { margin: 6px 0; }
+ul, ol { padding-right: 22px; margin: 8px 0; }
+li { margin: 4px 0; }
+strong { font-weight: bold; }
+a { color: #176168; text-decoration: none; overflow-wrap: anywhere; }
+code { direction: ltr; unicode-bidi: isolate; font-family: Consolas, "Courier New", monospace; font-size: 11.5px; }
+p code, li code, td code { display: inline-block; max-width: 100%; overflow-wrap: anywhere; line-height: 1.55; background: #f1f4f6; padding: 1px 3px; }
+pre { direction: ltr; text-align: left; margin: 8px 0; padding: 10px 14px; border: 1px solid #dce3e8; border-radius: 3px; background: #f5f7f9; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+pre code { display: block; font-size: 11.6px; line-height: 1.5; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; line-height: 1.65; margin: 8px 0 11px; table-layout: auto; }
+th, td { text-align: right; padding: 5px 8px; border-bottom: 1px solid #dce3e8; vertical-align: top; overflow-wrap: anywhere; }
+th { background: #edf3f4; color: #172634; font-weight: bold; }
+tr { break-inside: avoid; }
+footer { position: absolute; right: 18mm; left: 18mm; bottom: 10mm; display: flex; justify-content: space-between; gap: 16px; padding-top: 6px; border-top: 1px solid #dce3e8; font-size: 10px; color: #566776; }
+footer span:last-child { direction: ltr; }
+.cover main { margin-top: 41mm; }
+.cover h1 { max-width: 160mm; }
+.cover h2 { margin: 0 0 24px; font-size: 24px; color: #176168; }
+.cover main p { margin: 16px 0; }
+.cover main p:first-of-type { font-size: 24px; margin-bottom: 25px; }
+.cover main p:nth-of-type(2) { font-size: 16px; }
+.cover main p:nth-of-type(3), .cover main p:nth-of-type(4) { color: #566776; font-size: 12px; }
+@media print { html, body { background: white; } .page { margin: 0; } }
+@media screen and (max-width: 810px) { body { background: white; } .page { width: 100%; height: auto; min-height: 297mm; margin: 0; padding: 14mm 7mm 23mm; } footer { left: 7mm; right: 7mm; } }
+</style>
+</head>
+<body><section class="page cover" id="page-1">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h1>جزوه آموزشی Jakarta EE در پروژه فروشگاه</h1>
+<h2>معماری و Mapper و Cache و Security</h2>
+<p><strong>تهیه و تدوین احمد مصباح</strong></p>
+<p>آموزش گام به گام با مثال‌های پروژه MftOnlineStoreEE</p>
+<p>JDK 17 · Jakarta EE 10 · TomEE · PostgreSQL · Redis</p>
+<p>نسخه آموزشی ۱ · بررسی کد در ۲۰۲۶/۱۰/۱۳</p>
+<p>این جزوه برای دانشجویی نوشته شده است که Java، کلاس، interface، record و SQL مقدماتی را می‌شناسد و می‌خواهد یک ماژول واقعی را در پروژه بنویسد. هدف، فهم ارتباط اجزاست؛ نه حفظ annotationها یا ساخت معماری پیچیده.</p>
+<p><strong>اصل دوره:</strong> هر مسئولیت یک جای مشخص داشته باشد. زیرساخت مشترک را دوباره ننویسیم؛ منطق کسب‌وکار را در ماژول خودش نگه داریم.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>1 / 28</span></footer>
+    </section>
+<section class="page " id="page-2">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>راهنمای مطالعه و فهرست</h2>
+<h3>چگونه از جزوه استفاده کنیم</h3>
+<p>هر بخش را به این ترتیب بخوانید: مفهوم، فایل متناظر در پروژه، مثال و تمرین. قبل از اضافه‌کردن امکانات، مسیر یک درخواست را در کد دنبال کنید.</p>
+<p><strong>سه برچسب مهم:</strong> «کد پروژه» یعنی مثال از فایل موجود است. «نمونه آموزشی» یعنی مثال برای توضیح ساده شده است. «کار باقی‌مانده» یعنی قابلیت هنوز آماده یا تأییدشده نیست.</p>
+<table>
+<thead>
+<tr>
+<th>موضوع</th>
+<th>صفحه</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>معماری و مرز ماژول‌ها</td>
+<td>۳ و ۴</td>
+</tr>
+<tr>
+<td>CDI و تزریق وابستگی</td>
+<td>۵</td>
+</tr>
+<tr>
+<td>Entity و Repository</td>
+<td>۶ و ۷</td>
+</tr>
+<tr>
+<td>DTO و Validation</td>
+<td>۸</td>
+</tr>
+<tr>
+<td>Mapper و MapStruct</td>
+<td>۹ و ۱۰</td>
+</tr>
+<tr>
+<td>Transaction و Lazy</td>
+<td>۱۱</td>
+</tr>
+<tr>
+<td>REST و پاسخ مشترک</td>
+<td>۱۲</td>
+</tr>
+<tr>
+<td>Cache و Redis</td>
+<td>۱۳ تا ۱۶</td>
+</tr>
+<tr>
+<td>Security و BCrypt</td>
+<td>۱۷ تا ۲۰</td>
+</tr>
+<tr>
+<td>Attachment و فایل</td>
+<td>۲۱</td>
+</tr>
+<tr>
+<td dir="ltr">OpenAPI</td>
+<td>۲۲</td>
+</tr>
+<tr>
+<td>UI و fetch مشترک</td>
+<td>۲۳</td>
+</tr>
+<tr>
+<td>Docker و تنظیمات</td>
+<td>۲۴</td>
+</tr>
+<tr>
+<td>تست و عیب‌یابی</td>
+<td>۲۵</td>
+</tr>
+<tr>
+<td>ساخت ماژول دانشجویی</td>
+<td>۲۶</td>
+</tr>
+<tr>
+<td>پرسش‌های مرور و پاسخ</td>
+<td>۲۷</td>
+</tr>
+<tr>
+<td>واژه‌نامه و منابع</td>
+<td>۲۸</td>
+</tr>
+</tbody></table>
+<p><strong>محدوده آموزش:</strong> پروژهٔ محلی و آموزشی است. بخش امنیت کامل نیست؛ نمونه‌های این فصل نباید به‌عنوان امنیت فعال برنامه معرفی شوند. تست و build نیز با اجرای واقعی سرور متفاوت‌اند.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>2 / 28</span></footer>
+    </section>
+<section class="page " id="page-3">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۱ معماری لایه‌ای و مسیر درخواست</h2>
+<h3>چرا لایه‌ها را جدا می‌کنیم</h3>
+<p>فرض کنید کاربر می‌خواهد یک دپارتمان ایجاد کند. API باید ورودی HTTP را دریافت کند؛ service باید وجود و فعال‌بودن شعبه و تکراری‌نبودن کد را بررسی کند؛ repository باید داده را بخواند و ذخیره کند. mapper فقط شکل داده را تبدیل می‌کند.</p>
+<p>اگر همهٔ این کارها داخل API نوشته شود، منطق به HTTP وابسته می‌شود و تست یا استفادهٔ دوباره سخت خواهد شد.</p>
+<pre><code class="language-text">Browser
+   |
+   v
+REST API --&gt; Request DTO
+   |
+   v
+Service --&gt; Business rules --&gt; Mapper --&gt; Response DTO
+   |
+   v
+Repository --&gt; EntityManager --&gt; PostgreSQL
+</code></pre>
+<h3>مسئولیت هر لایه</h3>
+<table>
+<thead>
+<tr>
+<th>لایه</th>
+<th>انجام می‌دهد</th>
+<th>نباید انجام دهد</th>
+</tr>
+</thead>
+<tbody><tr>
+<td dir="ltr">REST</td>
+<td>مسیر، method، validation و status</td>
+<td>محاسبه مبلغ یا query دیتابیس</td>
+</tr>
+<tr>
+<td dir="ltr">Service</td>
+<td>قواعد، transaction و بارگذاری رابطه</td>
+<td>ساخت HTML یا مدیریت هدر HTTP</td>
+</tr>
+<tr>
+<td dir="ltr">Repository</td>
+<td>query و persist/merge/remove</td>
+<td>تصمیم درباره مجوز یا وضعیت سفارش</td>
+</tr>
+<tr>
+<td dir="ltr">Mapper</td>
+<td>تبدیل داده و نام فیلدها</td>
+<td>اجرای query و احراز هویت</td>
+</tr>
+<tr>
+<td dir="ltr">Entity</td>
+<td>مدل پایدار و رابطه‌های JPA</td>
+<td>دریافت request یا ساخت response</td>
+</tr>
+</tbody></table>
+<p><strong>نمونه پروژه:</strong> در Department.create ابتدا کد بررسی و Branch بارگذاری می‌شود؛ سپس request به entity تبدیل، رابطه تعیین و DTO خروجی ساخته می‌شود.</p>
+<p><strong>تمرین:</strong> مسیر POST یک Attachment را از API تا repository دنبال کنید. بنویسید پاسخ 201 کجا ساخته می‌شود و تکراری‌بودن نام فایل کجا بررسی می‌شود.</p>
+<p><strong>فایل مطالعه:</strong> <code>organization/service/impl/DepartmentServiceImpl.java</code> و <code>attachments/rest/AttachmentApi.java</code>.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>3 / 28</span></footer>
+    </section>
+<section class="page " id="page-4">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۲ مرز ماژول‌ها و زیرساخت مشترک</h2>
+<h3>ساختار پروژه</h3>
+<p>ماژول یعنی مجموعهٔ کدهای مربوط به یک مسئولیت کسب‌وکار. داخل هر ماژول پوشه‌های entity، repository، dto، mapper، service، rest و exception قرار می‌گیرند.</p>
+<pre><code class="language-text">com.mftplus.mftonlinestoreee
+  core / config / integration
+  attachments
+  users / products / organization
+  orders / inventories / tickets
+  delivery / financials
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>بخش</th>
+<th>مسئولیت</th>
+</tr>
+</thead>
+<tbody><tr>
+<td dir="ltr">core</td>
+<td>قراردادهای پایه، پاسخ، خطا، paging و logging</td>
+</tr>
+<tr>
+<td>config و integration</td>
+<td>EntityManager، datasource و اتصال TomEE به Hibernate</td>
+</tr>
+<tr>
+<td dir="ltr">attachments</td>
+<td>مشخصات و محتوای پیوست</td>
+</tr>
+<tr>
+<td dir="ltr">users</td>
+<td>کاربر، نقش و پروفایل</td>
+</tr>
+<tr>
+<td dir="ltr">products</td>
+<td>محصول و دسته‌بندی</td>
+</tr>
+<tr>
+<td dir="ltr">organization</td>
+<td>سازمان، شعبه، دپارتمان و عضویت کارمند</td>
+</tr>
+<tr>
+<td>orders و inventories</td>
+<td>سفارش و گردش موجودی</td>
+</tr>
+<tr>
+<td>tickets و delivery</td>
+<td>پشتیبانی و مرسوله</td>
+</tr>
+<tr>
+<td dir="ltr">financials</td>
+<td>بانک، حساب، صندوق و پرداخت</td>
+</tr>
+</tbody></table>
+<h3>چگونه وابستگی را کنترل کنیم</h3>
+<ul>
+<li>ماژول به Core وابسته است؛ Core نباید برای هر ماژول import جدید بگیرد.</li>
+<li>service می‌تواند repository ماژول مرتبط را برای بارگذاری entity استفاده کند.</li>
+<li>تغییر User یا Product باید با گروه‌های مصرف‌کننده هماهنگ شود.</li>
+<li>Attachment با ownerType/ownerId به مالک اشاره می‌کند؛ برای هر مالک service جدا ندارد.</li>
+<li>هر منطق مشترک را فوراً به Core منتقل نکنید؛ اول ببینید واقعاً چند مصرف‌کننده دارد.</li>
+</ul>
+<p><strong>تقسیم کار دوره:</strong> زیرساخت و Attachment با مدرس است؛ دانشجو ماژول خودش را با قراردادهای آماده تکمیل می‌کند. abstraction تازه فقط برای نیاز واقعی ساخته شود.</p>
+<p><strong>تمرین:</strong> وابستگی دپارتمان به User و Branch را رسم کنید. توضیح دهید چرا User لازم نیست فهرست دپارتمان‌هایش را نگه دارد.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>4 / 28</span></footer>
+    </section>
+<section class="page " id="page-5">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۳ CDI و تزریق وابستگی</h2>
+<h3>مدیریت شیء با Container</h3>
+<p>CDI شیءهای برنامه را پیدا و وابستگی‌هایشان را تزریق می‌کند. وقتی service را با <code>new</code> بسازیم، انتظار تزریق خودکار، transaction یا logging از Container نداریم.</p>
+<p><strong>کد پروژه به‌صورت کوتاه:</strong></p>
+<pre><code class="language-java">@ApplicationScoped
+public class DepartmentDtoLoader {
+    @Inject
+    private DepartmentRepository repository;
+
+    @Inject
+    private DepartmentMapper mapper;
+
+    @Transactional
+    public Optional&lt;DepartmentDto&gt; findById(Long id) {
+        return repository.findById(id).map(mapper::toDto);
+    }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>annotation</th>
+<th>مفهوم در پروژه</th>
+</tr>
+</thead>
+<tbody><tr>
+<td dir="ltr">@Inject</td>
+<td>وابستگی از Container دریافت می‌شود</td>
+</tr>
+<tr>
+<td dir="ltr">@ApplicationScoped</td>
+<td>bean مشترک در طول عمر application</td>
+</tr>
+<tr>
+<td dir="ltr">@RequestScoped</td>
+<td>bean با عمر یک request</td>
+</tr>
+<tr>
+<td dir="ltr">@Produces</td>
+<td>معرفی منبع تولید یک وابستگی</td>
+</tr>
+<tr>
+<td dir="ltr">@PostConstruct</td>
+<td>آماده‌سازی پس از تزریق</td>
+</tr>
+<tr>
+<td dir="ltr">@PreDestroy</td>
+<td>آزادسازی منابع هنگام پایان عمر bean</td>
+</tr>
+</tbody></table>
+<h3>نکته‌های عملی</h3>
+<p>در beans.xml حالت کشف annotated است؛ کلاس‌های سرویس و repository باید scope مناسب داشته باشند. API معمولاً RequestScoped است و mapper با تنظیم JAKARTA_CDI تولید می‌شود.</p>
+<p>ApplicationScoped به معنی thread-safe بودن همهٔ فیلدها نیست. اطلاعات request، رمز کاربر یا entity یک درخواست را در فیلد مشترک service نگه ندارید.</p>
+<p><strong>Interceptor:</strong> annotationهایی مثل Transactional و Loggable هنگام فراخوانی از مسیر مدیریتی Container عمل می‌کنند. فراخوانی داخلی همان شیء در این پروژه را جای ورود از bean دیگر فرض نکنید.</p>
+<p><strong>تمرین:</strong> تفاوت inject کردن DepartmentDtoLoader با ساخت آن توسط new را توضیح دهید. اگر یک dependency دو implementation داشته باشد، چرا انتخاب آن ممکن است مبهم شود؟</p>
+<p><strong>منبع تکمیلی:</strong> <a href="https://jakarta.ee/specifications/cdi/4.0/">مفاهیم CDI</a>.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>5 / 28</span></footer>
+    </section>
+<section class="page " id="page-6">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۴ Entity و چرخه عمر داده</h2>
+<h3>Entity با DTO تفاوت دارد</h3>
+<p>Entity مدل database است و می‌تواند رابطه، شناسه، version و وضعیت حذف داشته باشد. BaseEntity یک MappedSuperclass است؛ جدول جدا ندارد و فیلدهایش در entity فرزند قرار می‌گیرند.</p>
+<table>
+<thead>
+<tr>
+<th>فیلد پایه</th>
+<th>کاربرد</th>
+</tr>
+</thead>
+<tbody><tr>
+<td dir="ltr">id</td>
+<td>شناسهٔ ساخته‌شده توسط database</td>
+</tr>
+<tr>
+<td dir="ltr">version</td>
+<td>optimistic locking و تشخیص تغییر هم‌زمان</td>
+</tr>
+<tr>
+<td dir="ltr">deleted</td>
+<td>حذف نرم</td>
+</tr>
+<tr>
+<td dir="ltr">createdAt</td>
+<td>زمان ایجاد در PrePersist</td>
+</tr>
+<tr>
+<td dir="ltr">updatedAt</td>
+<td>زمان تغییر در PreUpdate</td>
+</tr>
+<tr>
+<td dir="ltr">deletedAt</td>
+<td>زمان حذف در SQL حذف نرم</td>
+</tr>
+</tbody></table>
+<p><strong>نمونه آموزشی از تنظیم entity پیوست:</strong></p>
+<pre><code class="language-java">@Entity
+@Table(name = &quot;attachments&quot;)
+@SQLDelete(sql =
+    &quot;update attachments set deleted=true, &quot; +
+    &quot;deleted_at=current_timestamp where id=? and version=?&quot;)
+@SQLRestriction(&quot;deleted = false&quot;)
+public class Attachment extends BaseEntity {
+}
+</code></pre>
+<p>این مثال فقط بخش annotationها را نشان می‌دهد؛ constructor، فیلدها و Lombok در فایل اصلی هستند. SQLDelete و SQLRestriction امکانات Hibernate هستند، نه annotationهای استاندارد JPA.</p>
+<h3>سه نکته مهم</h3>
+<p>۱. شناسه و زمان‌ها را در entity فرزند دوباره تعریف نکنید. enum را با STRING ذخیره کنید تا ترتیب ثابت‌ها معنای داده را عوض نکند.</p>
+<p>۲. حذف نرم یعنی ردیف باقی می‌ماند. constraint یکتای database ممکن است اجازه ندهد مقدار ردیف حذف‌شده دوباره استفاده شود؛ صرف بررسی service این تعارض را حل نمی‌کند.</p>
+<p>۳. version را client تعیین نکند. دو تغییر هم‌زمان می‌توانند به خطای optimistic lock برسند؛ «وجود version» جای تست هم‌زمانی نیست.</p>
+<p><strong>تمرین:</strong> تفاوت حذف نرم و حذف فیزیکی را برای فایل پیوست توضیح دهید.</p>
+<p><strong>فایل مطالعه:</strong> <code>core/entity/BaseEntity.java</code> و <code>attachments/entity/Attachment.java</code>.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>6 / 28</span></footer>
+    </section>
+<section class="page " id="page-7">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۵ Repository و صفحه‌بندی</h2>
+<h3>query در جای درست</h3>
+<p>BaseRepository عملیات عمومی را دارد. repository ماژول، entityType و finderهای خاص را معرفی می‌کند. save از persist، update از merge و delete از remove استفاده می‌کند.</p>
+<p><strong>نمونه آموزشی finder با JPQL:</strong></p>
+<pre><code class="language-java">public List&lt;Department&gt; findByBranchId(Long branchId) {
+    return entityManager.createQuery(
+            &quot;select department from Department department &quot; +
+            &quot;where department.branch.id = :branchId &quot; +
+            &quot;order by department.id&quot;, Department.class)
+        .setParameter(&quot;branchId&quot;, branchId)
+        .getResultList();
+}
+</code></pre>
+<p>JPQL نام entity و فیلد Java را می‌شناسد؛ SQL نام جدول و ستون را. مقدار کاربر را به متن query نچسبانید؛ setParameter به‌کار ببرید.</p>
+<h3>قراردادهای آماده</h3>
+<table>
+<thead>
+<tr>
+<th>متد</th>
+<th>نتیجه</th>
+</tr>
+</thead>
+<tbody><tr>
+<td dir="ltr">findById(id)</td>
+<td>Optional entity؛ برای نبودن رکورد خالی</td>
+</tr>
+<tr>
+<td dir="ltr">findAll()</td>
+<td>فهرست مرتب‌شده بر اساس id</td>
+</tr>
+<tr>
+<td dir="ltr">findAll(page, size)</td>
+<td>فقط محتوای یک صفحه</td>
+</tr>
+<tr>
+<td dir="ltr">findPage(page, size)</td>
+<td>PageResult همراه تعداد کل</td>
+</tr>
+<tr>
+<td dir="ltr">count()</td>
+<td>تعداد رکوردهای قابل مشاهده</td>
+</tr>
+<tr>
+<td dir="ltr">restore(id)</td>
+<td>بازگرداندن حذف نرم با UPDATE native</td>
+</tr>
+</tbody></table>
+<pre><code class="language-java">public PageResult&lt;DepartmentDto&gt; findAll(int page, int size) {
+    return repository.findPage(page, size).map(mapper::toDto);
+}
+</code></pre>
+<p>صفحه‌ها از صفر شروع می‌شوند. برای page=2 و size=10، offset برابر 20 است. ترتیب ثابت برای paging ضروری است؛ این روش snapshot مشترک میان requestها ایجاد نمی‌کند.</p>
+<p><strong>تمرین:</strong> چرا List ده‌تایی به‌تنهایی برای محاسبه تعداد صفحه‌ها کافی نیست؟ چرا مقایسه <code>bank = :bankId</code> با id عددی می‌تواند اشتباه باشد؟</p>
+<p><strong>فایل مطالعه:</strong> <code>core/repository/BaseRepository.java</code> و <code>core/dto/PageResult.java</code>.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>7 / 28</span></footer>
+    </section>
+<section class="page " id="page-8">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۶ DTO و Validation</h2>
+<h3>قرارداد ورودی را از مدل database جدا کنیم</h3>
+<p>Request فقط فیلدهایی را می‌گیرد که client اجازه دارد تغییر دهد. DTO خروجی نیز فقط دادهٔ موردنیاز UI را منتشر می‌کند. قرار دادن entity داخل DTO می‌تواند رابطه‌های Lazy، حلقه JSON و دادهٔ حساس را به بیرون ببرد.</p>
+<p><strong>کد پروژه:</strong></p>
+<pre><code class="language-java">public record DepartmentRequest(
+    @NotNull @Positive Long branchId,
+    @NotBlank @Size(max = 150) String name,
+    @NotBlank @Size(max = 50) String code,
+    @Size(max = 500) String description
+) {
+}
+</code></pre>
+<p>branchId عدد است؛ client نباید یک Branch کامل ارسال کند. status دپارتمان در این request نیست و با عملیات وضعیت تغییر می‌کند.</p>
+<h3>annotation مناسب نوع داده</h3>
+<table>
+<thead>
+<tr>
+<th>نوع</th>
+<th>قاعدهٔ مناسب</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>String اجباری</td>
+<td>NotBlank و Size</td>
+</tr>
+<tr>
+<td>شناسه اجباری</td>
+<td>NotNull و Positive</td>
+</tr>
+<tr>
+<td>مقدار اختیاری</td>
+<td>constraint مربوط، بدون الزام بی‌دلیل</td>
+</tr>
+<tr>
+<td>List قلم‌ها</td>
+<td>NotEmpty و Valid برای بررسی اعضا</td>
+</tr>
+<tr>
+<td>ایمیل</td>
+<td>Email همراه الزام موردنیاز</td>
+</tr>
+<tr>
+<td>پول</td>
+<td>BigDecimal و قواعد علامت/حدود</td>
+</tr>
+</tbody></table>
+<p>Size به‌تنهایی null یا رشتهٔ خالی را رد نمی‌کند. NotBlank را روی Boolean، enum یا عدد قرار ندهید.</p>
+<p><strong>در API:</strong> بدنه با <code>@NotNull @Valid</code> بررسی می‌شود. قواعدی مثل «شعبه باید فعال باشد» validation ساختاری نیستند؛ آن‌ها در service و با BusinessException بررسی می‌شوند.</p>
+<h3>پرسش تصمیم‌گیری</h3>
+<p>«کد دپارتمان ۸۰ کاراکتر است» خطای ورودی است. «همین کد در همین شعبه وجود دارد» خطای business است. این دو مسیر و پیام متفاوت دارند.</p>
+<p><strong>تمرین:</strong> یک Request برای محصول طراحی کنید که قیمت، نام و categoryId داشته باشد، اما id، version و entity دسته‌بندی نگیرد.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>8 / 28</span></footer>
+    </section>
+<section class="page " id="page-9">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۷ Mapper و MapStruct</h2>
+<h3>Mapper چه مشکلی را حل می‌کند</h3>
+<p>در هر create/update/read، داده بین Request، Entity و DTO جابه‌جا می‌شود. mapper این تبدیل تکراری را متمرکز می‌کند. MapStruct پیاده‌سازی را هنگام کامپایل تولید می‌کند؛ query یا منطق business را تولید نمی‌کند.</p>
+<p><strong>قرارداد موجود پروژه:</strong></p>
+<pre><code class="language-java">public interface BaseMapper&lt;E extends BaseEntity, D, R&gt; {
+    D toDto(E entity);
+    List&lt;D&gt; toDtoList(List&lt;E&gt; entities);
+
+    @Mapping(target = &quot;id&quot;, ignore = true)
+    @Mapping(target = &quot;version&quot;, ignore = true)
+    E toEntity(R request);
+
+    @Mapping(target = &quot;id&quot;, ignore = true)
+    @Mapping(target = &quot;version&quot;, ignore = true)
+    void updateEntity(R request, @MappingTarget E entity);
+}
+</code></pre>
+<p><strong>تنظیم مشترک:</strong></p>
+<pre><code class="language-java">@MapperConfig(
+    componentModel = MappingConstants.ComponentModel.JAKARTA_CDI,
+    unmappedTargetPolicy = ReportingPolicy.IGNORE
+)
+public interface MapStructConfig {
+}
+</code></pre>
+<p>JAKARTA_CDI باعث می‌شود implementation تولیدشده قابل inject باشد. IGNORE یعنی بعضی فیلدهای بدون mapping، build را متوقف نمی‌کنند؛ پس build موفق، کامل‌بودن تبدیل داده را ثابت نمی‌کند.</p>
+<h3>چهار تبدیل</h3>
+<ul>
+<li>toEntity برای ساخت entity از request.</li>
+<li>updateEntity برای تغییر همان entity موجود.</li>
+<li>toDto برای پاسخ.</li>
+<li>toDtoList برای فهرست پاسخ‌ها.</li>
+</ul>
+<p><strong>تمرین:</strong> بعد از کامپایل، AttachmentMapperImpl را در generated-sources باز کنید. ببینید کدام setter/builder فراخوانی می‌شود و کدام فیلد داخلی حفظ می‌شود.</p>
+<p><strong>مرجع:</strong> <a href="https://mapstruct.org/documentation/1.6/reference/html/">MapStruct 1.6</a>.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>9 / 28</span></footer>
+    </section>
+<section class="page " id="page-10">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۸ Mapping رابطه و نام متفاوت</h2>
+<h3>شناسه رابطه را به DTO تبدیل کنیم</h3>
+<p><strong>نمونه از DepartmentMapper:</strong></p>
+<pre><code class="language-java">@Mapper(config = MapStructConfig.class)
+public interface DepartmentMapper
+        extends BaseMapper&lt;Department, DepartmentDto, DepartmentRequest&gt; {
+
+    @Mapping(target = &quot;branchId&quot;, source = &quot;branch.id&quot;)
+    @Mapping(target = &quot;branchName&quot;, source = &quot;branch.name&quot;)
+    DepartmentDto toDto(Department entity);
+
+    @Mapping(target = &quot;branch&quot;, ignore = true)
+    @Mapping(target = &quot;employees&quot;, ignore = true)
+    @Mapping(target = &quot;status&quot;, ignore = true)
+    void updateEntity(
+        DepartmentRequest request,
+        @MappingTarget Department entity
+    );
+}
+</code></pre>
+<p>این بخش کوتاه‌شده است؛ فایل اصلی toEntity و تبدیل EmployeeDto را نیز دارد. service باید Branch معتبر را از repository بخواند و setBranch کند. mapper مسئول معتبر یا فعال‌بودن شعبه نیست.</p>
+<h3>نمونه آموزشی اصلاح نام متفاوت</h3>
+<p>در پروژه، ProductRequest نام active و entity نام isActive دارد. باید نام‌ها هماهنگ یا mapping صریح شود:</p>
+<pre><code class="language-java">@Mapping(target = &quot;isActive&quot;, source = &quot;active&quot;)
+@Mapping(target = &quot;productCategory&quot;, ignore = true)
+void updateEntity(
+    ProductRequest request,
+    @MappingTarget Product entity
+);
+</code></pre>
+<p>همین نیاز در مسیر create هم باید بررسی شود. خروجی دسته‌بندی نیز active دارد، ولی entity آن isActive است.</p>
+<h3>چک‌لیست mapper</h3>
+<p>۱. نام فیلدها و getter واقعی را بررسی کنید. ۲. relation در خروجی به فیلد ساده تبدیل شود. ۳. فیلدهای server-owned از ورودی map نشوند. ۴. در override، تنظیمات لازم و inheritance را بررسی کنید. ۵. کد تولیدشده و تست حفظ id/version را بخوانید.</p>
+<p><strong>هشدار:</strong> mapper به getter رابطهٔ Lazy دست می‌زند. مناسب‌بودن mapping، بازبودن persistence context را تضمین نمی‌کند.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>10 / 28</span></footer>
+    </section>
+<section class="page " id="page-11">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۹ Transaction و Lazy Loading</h2>
+<h3>مرز یک عملیات business</h3>
+<p>در ثبت گردش انبار، ذخیرهٔ transaction و تغییر quantity باید با هم موفق یا با هم rollback شوند. Transactional مرز این عملیات را مشخص می‌کند.</p>
+<p><strong>نمونه آموزشی update روی entity managed:</strong></p>
+<pre><code class="language-java">@Transactional
+public Optional&lt;DepartmentDto&gt; updateName(Long id, String name) {
+    return repository.findById(id).map(department -&gt; {
+        department.setName(name);
+        return mapper.toDto(department);
+    });
+}
+</code></pre>
+<p>این مثال فقط dirty checking را نشان می‌دهد؛ validation، business rule و ابطال کش برای عملیات واقعی باید انجام شوند. merge دوباره برای entity managed معمولاً لازم نیست.</p>
+<h3>Lazy یعنی بارگذاری هنگام نیاز</h3>
+<p>Department.branch و Branch.organization رابطهٔ Lazy دارند. mapper ممکن است برای ساخت branchName به getter دست بزند؛ بنابراین خواندن و mapping باید در context معتبر انجام شود.</p>
+<p>در پروژه، DepartmentDtoLoader یک bean جداست و findById آن Transactional است. تبدیل DTO پیش از خروج از این مرز انجام می‌شود؛ service بیرونی بعداً DTO را کش می‌کند.</p>
+<table>
+<thead>
+<tr>
+<th>موضوع</th>
+<th>قاعده</th>
+</tr>
+</thead>
+<tbody><tr>
+<td dir="ltr">REQUIRED</td>
+<td>پیوستن به transaction موجود یا شروع transaction</td>
+</tr>
+<tr>
+<td dir="ltr">RuntimeException</td>
+<td>پیش‌فرض علامت rollback</td>
+</tr>
+<tr>
+<td dir="ltr">checked exception</td>
+<td>پیش‌فرض الزاماً rollback نمی‌کند</td>
+</tr>
+<tr>
+<td dir="ltr">dirty checking</td>
+<td>تغییر entity managed در transaction ذخیره می‌شود</td>
+</tr>
+<tr>
+<td>Lazy خارج از context</td>
+<td>ممکن است هنگام خواندن relation خطا بدهد</td>
+</tr>
+</tbody></table>
+<p>برای رفتار متفاوت از rollbackOn/dontRollbackOn استفاده می‌شود؛ به این پروژه بدون نیاز اضافه نکنید.</p>
+<p><strong>تمرین:</strong> چرا نوشتن annotation فقط روی یک helper داخلی همان کلاس کافی نیست؟ چرا نمی‌خواهیم دادهٔ commit‌نشده در Redis قرار گیرد؟</p>
+<p><strong>مرجع:</strong> <a href="https://jakarta.ee/specifications/transactions/2.0/">Jakarta Transactions</a>.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>11 / 28</span></footer>
+    </section>
+<section class="page " id="page-12">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۱۰ REST و پاسخ یکسان</h2>
+<h3>قرارداد HTTP</h3>
+<p>RestApplication یک prefix مشترک <code>/api/v1</code> دارد. روی کلاس API فقط مسیر ماژول مثل <code>/attachments</code> قرار می‌گیرد؛ تکرار prefix مسیر را اشتباه می‌کند.</p>
+<p><strong>کد کوتاه از AttachmentApi:</strong></p>
+<pre><code class="language-java">@GET
+@Path(&quot;/{id}&quot;)
+@PermitAll
+public AttachmentDto getAttachment(@PathParam(&quot;id&quot;) Long id) {
+    return attachmentService.findById(id)
+        .orElseThrow(() -&gt; new NotFoundException(
+            &quot;Attachment &quot; + id + &quot; not found&quot;));
+}
+</code></pre>
+<p>API Optional را مستقیماً به client نمی‌دهد. service نبودن داده را با Optional خالی بیان می‌کند و API آن را به 404 تبدیل می‌کند.</p>
+<h3>نقش Core در پاسخ</h3>
+<p>ApiResponseFilter پاسخ JSON را پوشش می‌دهد؛ API پوشش مشترک را دوباره نسازد.</p>
+<table>
+<thead>
+<tr>
+<th>اتفاق</th>
+<th>status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>خواندن یا ویرایش موفق</td>
+<td dir="ltr">200</td>
+</tr>
+<tr>
+<td>ساخت موفق</td>
+<td dir="ltr">201</td>
+</tr>
+<tr>
+<td>حذف بدون body</td>
+<td dir="ltr">204</td>
+</tr>
+<tr>
+<td>ورودی نامعتبر</td>
+<td dir="ltr">400</td>
+</tr>
+<tr>
+<td>رکورد ناموجود</td>
+<td dir="ltr">404</td>
+</tr>
+<tr>
+<td>قاعدهٔ business نقض شده</td>
+<td dir="ltr">409</td>
+</tr>
+<tr>
+<td>خطای ناشناخته</td>
+<td dir="ltr">500</td>
+</tr>
+</tbody></table>
+<pre><code class="language-json">{
+  &quot;success&quot;: true, &quot;status&quot;: 200,
+  &quot;data&quot;: { &quot;id&quot;: 1, &quot;name&quot;: &quot;Sales&quot; },
+  &quot;timestamp&quot;: &quot;2026-10-13T10:00:00Z&quot;
+}
+</code></pre>
+<p>این JSON نمونه است، نه دادهٔ واقعی database. فیلدهای null ممکن است حذف شوند. stream دانلود و 204 دوباره پوشش JSON نمی‌گیرند.</p>
+<p><strong>تمرین:</strong> چرا پاسخ 200 همراه success=false برای خطای business انتخاب خوبی نیست؟ چرا نباید exception mapper را در هر ماژول تکرار کنیم؟</p>
+</main>
+        <footer><span>احمد مصباح</span><span>12 / 28</span></footer>
+    </section>
+<section class="page " id="page-13">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۱۱ Cache و الگوی Cache Aside</h2>
+<h3>کش منبع اصلی داده نیست</h3>
+<p>دیتابیس منبع اصلی است. کش یک کپی موقت برای خواندن‌های تکراری نگه می‌دارد. هدف این مثال کاهش queryهای تکراری findById است، نه کش‌کردن همهٔ عملیات پروژه.</p>
+<table>
+<thead>
+<tr>
+<th>اصطلاح</th>
+<th>معنی</th>
+</tr>
+</thead>
+<tbody><tr>
+<td dir="ltr">Hit</td>
+<td>مقدار در کش وجود دارد</td>
+</tr>
+<tr>
+<td dir="ltr">Miss</td>
+<td>مقدار در کش نیست</td>
+</tr>
+<tr>
+<td dir="ltr">TTL</td>
+<td>مدت باقی‌ماندن مقدار</td>
+</tr>
+<tr>
+<td dir="ltr">Invalidation</td>
+<td>حذف مقدار قدیمی پس از تغییر</td>
+</tr>
+<tr>
+<td dir="ltr">Cache Aside</td>
+<td>service خودش خواندن و پرکردن کش را مدیریت می‌کند</td>
+</tr>
+</tbody></table>
+<pre><code class="language-text">findById(id)
+    |
+    v
+GET Redis ------ hit ------&gt; DTO
+    |
+   miss
+    |
+    v
+Read database --&gt; Map DTO --&gt; SET with TTL --&gt; DTO
+</code></pre>
+<h3>انتخاب سادهٔ پروژه</h3>
+<p>در RedisDtoCache، DTO به JSON تبدیل می‌شود؛ entity و proxy JPA در Redis ذخیره نمی‌شوند. فقط سازمان و دپارتمان، با TTL برابر 300 ثانیه کش دارند. list، page، membership و رکورد ناموجود کش نمی‌شوند.</p>
+<p>Caffeine کش داخل همان JVM است؛ Redis خارج از process است و اتصال شبکه می‌خواهد. در نسخهٔ فعلی پروژه از Redis استفاده می‌شود، نه ترکیب این دو.</p>
+<p><strong>کلیدها:</strong> <code>mft-store:cache:organization:1</code> و <code>mft-store:cache:department:1</code>.</p>
+<p><strong>تمرین:</strong> سه GET برای یک id موجود اجرا کنید. انتظار دارید کدام درخواست database را بخواند؟ اگر کلید منقضی شود چه اتفاقی می‌افتد؟</p>
+<p><strong>مرجع:</strong> <a href="https://redis.io/docs/latest/develop/use-cases/cache-aside/">الگوی Cache Aside در Redis</a>.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>13 / 28</span></footer>
+    </section>
+<section class="page " id="page-14">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۱۲ خواندن کش در کد پروژه</h2>
+<h3>از service شروع کنیم</h3>
+<p><strong>کد پروژه از DepartmentServiceImpl:</strong></p>
+<pre><code class="language-java">public Optional&lt;DepartmentDto&gt; findById(Long id) {
+    if (cache.inTransaction()) {
+        return loader.findById(id);
+    }
+
+    Optional&lt;DepartmentDto&gt; cached = cache.get(
+        CacheInvalidation.Region.DEPARTMENT,
+        id,
+        DepartmentDto.class
+    );
+    if (cached.isPresent()) {
+        return cached;
+    }
+
+    Optional&lt;DepartmentDto&gt; result = loader.findById(id);
+    result.ifPresent(dto -&gt; cache.put(
+        CacheInvalidation.Region.DEPARTMENT, id, dto));
+    return result;
+}
+</code></pre>
+<h3>چرا transaction موجود از کش عبور می‌کند</h3>
+<p>ممکن است همین transaction قبلاً entity را تغییر داده و هنوز commit نکرده باشد. خواندن مستقیم database/context همان عملیات، از انتشار دادهٔ نهایی‌نشده در Redis جلوگیری می‌کند. این تصمیم جای تضمین کامل هم‌زمانی را نمی‌گیرد.</p>
+<h3>عملیات سادهٔ Redis</h3>
+<pre><code class="language-text">GET mft-store:cache:department:1
+SET mft-store:cache:department:1 &quot;{...}&quot; EX 300
+DEL mft-store:cache:department:1
+TTL mft-store:cache:department:1
+</code></pre>
+<p>در کد واقعی، JSON-B تبدیل DTO را انجام می‌دهد و Jedis دستورها را می‌فرستد. خطای عملیات Redis یا JSON-B در get باعث miss و ادامهٔ خواندن از database می‌شود.</p>
+<p><strong>فایل مطالعه:</strong> <code>organization/cache/RedisDtoCache.java</code> و <code>DepartmentDtoLoader.java</code>.</p>
+<p><strong>تمرین:</strong> چرا result.ifPresent فقط DTO موجود را ذخیره می‌کند؟ تفاوت null id و id ناموجود را در مسیر کد بررسی کنید.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>14 / 28</span></footer>
+    </section>
+<section class="page " id="page-15">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۱۳ ابطال کش پس از Commit</h2>
+<h3>چرا حذف فوری کافی نیست</h3>
+<p>فرض کنید transaction مقدار database را تغییر می‌دهد. اگر پیش از commit کلید حذف شود، درخواست دیگری ممکن است هنوز مقدار قدیمی را بخواند و دوباره کش کند. خود transaction نیز ممکن است rollback شود.</p>
+<p>در پروژه، service رویداد تغییر می‌فرستد و observer پس از commit موفق کلید را حذف می‌کند.</p>
+<p><strong>نمونه رویداد از عملیات تغییر:</strong></p>
+<pre><code class="language-java">cacheInvalidations.fire(new CacheInvalidation(
+    CacheInvalidation.Region.DEPARTMENT, id));
+</code></pre>
+<p><strong>ساختار observer در RedisDtoCache به‌صورت کوتاه:</strong></p>
+<pre><code class="language-java">public void invalidate(
+    @Observes(during = TransactionPhase.AFTER_SUCCESS)
+    CacheInvalidation change
+) {
+    if (change.region() == Region.ALL_DEPARTMENTS) {
+        clear(PREFIX + &quot;department:*&quot;);
+        return;
+    }
+    client.del(key(change.region(), change.id()));
+}
+</code></pre>
+<p>فایل اصلی خطاهای Jedis را نیز مدیریت می‌کند؛ این مثال فقط تصمیم اصلی را نشان می‌دهد.</p>
+<pre><code class="language-text">Service write --&gt; fire event --&gt; commit succeeds --&gt; DEL cache
+                            \-&gt; rollback         --&gt; no DEL
+</code></pre>
+<h3>وابستگی DTO را فراموش نکنیم</h3>
+<p>DepartmentDto نام شعبه دارد؛ بنابراین ویرایش شعبه تمام کلیدهای دپارتمان را پاک می‌کند. اگر DTO فیلد وابستهٔ تازه بگیرد، قواعد ابطال نیز باید بررسی شوند.</p>
+<p>تغییر عضویت کارمند کش DepartmentDto را باطل نمی‌کند؛ چون این DTO فهرست کارمندان ندارد. فهرست کارمندان از مسیر جدا خوانده می‌شود.</p>
+<p><strong>تمرین:</strong> ترتیب خواندن/نوشتن دو درخواست هم‌زمان را رسم کنید. نشان دهید چرا AFTER_SUCCESS مناسب‌تر است، ولی باز هم کش کاملاً بدون دادهٔ قدیمی نمی‌سازد.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>15 / 28</span></footer>
+    </section>
+<section class="page " id="page-16">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۱۴ قطعی Redis و آزمایش کش</h2>
+<h3>رفتار آموزشی فعلی</h3>
+<p>خطای عملیات Redis باعث مراجعه به database می‌شود. شکست SET نباید نتیجهٔ خواندن موفق database را از بین ببرد. با این حال، تنظیم host/port نامعتبر یا خطای راه‌اندازی را با fallback همهٔ خطاها یکی ندانید.</p>
+<table>
+<thead>
+<tr>
+<th>وضعیت</th>
+<th>انتظار</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>کلید موجود</td>
+<td>بازگشت DTO کش</td>
+</tr>
+<tr>
+<td>کلید غایب یا منقضی</td>
+<td>خواندن database و تلاش برای SET</td>
+</tr>
+<tr>
+<td>Redis هنگام GET قطع</td>
+<td>خواندن database</td>
+</tr>
+<tr>
+<td>ابطال هنگام قطعی از دست برود</td>
+<td>مقدار قدیمی بعد از اتصال ممکن است تا TTL دیده شود</td>
+</tr>
+<tr>
+<td>شروع برنامه</td>
+<td>کلیدهای prefix پروژه پاک می‌شوند</td>
+</tr>
+</tbody></table>
+<p>پاک‌سازی startup به‌دلیل create-drop است. prefix مشترک میان چند اجرای هم‌زمان مناسب نیست؛ هر اجرا می‌تواند کش دیگری را پاک کند.</p>
+<h3>آزمایش روی دیتاست کوچک کلاس</h3>
+<p>پس از راه‌اندازی موفق برنامه و وجود یک دپارتمان واقعی:</p>
+<pre><code class="language-powershell">docker compose exec redis redis-cli PING
+docker compose exec redis redis-cli GET mft-store:cache:department:1
+docker compose exec redis redis-cli TTL mft-store:cache:department:1
+</code></pre>
+<p>۱. GET API همان id را اجرا کنید. ۲. مقدار Redis و TTL را ببینید. ۳. GET را تکرار کنید. ۴. نام دپارتمان را از API تغییر دهید. ۵. پس از commit، نبودن کلید و سپس پرشدن مجدد را بررسی کنید.</p>
+<p>TTL برابر -2 یعنی کلید نیست و -1 یعنی expiry ندارد؛ مقدار موجود این کش باید expiry داشته باشد.</p>
+<h3>حد سادگی</h3>
+<p>KEYS برای دیتاست کوچک مثال استفاده شده است. در دادهٔ بزرگ می‌تواند سرور را مشغول کند؛ برای سامانهٔ واقعی راهبردی مثل SCAN بررسی می‌شود. در این کلاس Lua، lock توزیع‌شده یا cache چندلایه لازم نیست.</p>
+<p><strong>مرجع:</strong> <a href="https://redis.io/docs/latest/commands/set/">SET</a>، <a href="https://redis.io/docs/latest/commands/ttl/">TTL</a> و <a href="https://redis.io/docs/latest/commands/keys/">KEYS</a>.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>16 / 28</span></footer>
+    </section>
+<section class="page " id="page-17">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۱۵ Security و پرسش‌های اصلی</h2>
+<h3>دو تصمیم متفاوت</h3>
+<p>Authentication می‌پرسد «این درخواست از طرف چه کسی است؟». Authorization می‌پرسد «این شخص اجازهٔ این عملیات را دارد؟». وجود username یا هدر Authorization پاسخ خودکار این پرسش‌ها نیست.</p>
+<table>
+<thead>
+<tr>
+<th>مفهوم</th>
+<th>مثال پروژه</th>
+</tr>
+</thead>
+<tbody><tr>
+<td dir="ltr">Credential</td>
+<td>username و password ارسالی</td>
+</tr>
+<tr>
+<td dir="ltr">Principal</td>
+<td>هویت تأییدشدهٔ درخواست</td>
+</tr>
+<tr>
+<td dir="ltr">Role</td>
+<td>گروهی مانند admin</td>
+</tr>
+<tr>
+<td dir="ltr">Permission</td>
+<td>نامی مانند attachment:file</td>
+</tr>
+<tr>
+<td dir="ltr">Identity Store</td>
+<td>منبع بررسی رمز و دریافت گروه‌ها</td>
+</tr>
+<tr>
+<td dir="ltr">Authentication Mechanism</td>
+<td>دریافت credential و ایجاد هویت معتبر</td>
+</tr>
+</tbody></table>
+<pre><code class="language-text">Request credentials
+       |
+       v
+Authentication --&gt; Principal and groups
+       |
+       v
+Authorization --&gt; allow endpoint OR reject
+</code></pre>
+<h3>سیاست موردنظر Attachment</h3>
+<p>خواندن metadata عمومی است. ساخت، ویرایش و حذف metadata برای admin در نظر گرفته شده است. آپلود و دانلود محتوا گروه attachment:file می‌خواهد.</p>
+<p>در SQL نمونه، نام permissionها همراه roleها به‌صورت group ارائه می‌شود. ردیف role/permission در database به‌تنهایی مجوز endpoint را اجرا نمی‌کند؛ identity store و قواعد دسترسی باید متصل باشند.</p>
+<h3>وضعیت فعلی را درست معرفی کنیم</h3>
+<p>BCrypt و annotationها وجود دارند، اما SecurityConfig و RolesAllowedFilter در فایل‌های فعلی نیستند؛ propertyهای اجرای security.sql نیز کامنت‌اند. امنیت کامل و ورود کاربران نمونه را آماده فرض نمی‌کنیم.</p>
+<p><strong>تمرین:</strong> چرا خطای «کاربر وارد شده ولی مجوز ندارد» با «هنوز وارد نشده» متفاوت است؟ کدام جزء باید تصمیم بگیرد؟</p>
+<p><strong>مرجع:</strong> <a href="https://jakarta.ee/learn/docs/jakartaee-tutorial/current/security/security.html">آموزش Jakarta Security</a>.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>17 / 28</span></footer>
+    </section>
+<section class="page " id="page-18">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۱۶ نگه‌داری رمز با BCrypt</h2>
+<h3>رمز را ذخیره یا برگردانیم؟</h3>
+<p>رمز خام در database، response و log نباید نگه‌داری شود. hash برای بررسی ورود ذخیره می‌شود؛ این کار با رمزنگاری قابل بازگشت فرق دارد.</p>
+<p>BCryptPasswordHash پروژه از PasswordHash استفاده می‌کند. salt تصادفی و cost برابر 10 در generate موجودند. ستون User.password برای hash است و UserDto رمز ندارد.</p>
+<p><strong>استفاده از bean موجود:</strong></p>
+<pre><code class="language-java">String encoded = passwordHash.generate(
+    request.password().toCharArray());
+
+user.setPassword(encoded);
+</code></pre>
+<p><strong>بررسی رمز با نمونه آموزشی:</strong></p>
+<pre><code class="language-java">boolean matches = passwordHash.verify(
+    submittedPassword.toCharArray(),
+    storedHash
+);
+</code></pre>
+<h3>چرا hashها را مقایسه نمی‌کنیم</h3>
+<p>یک password با saltهای متفاوت hash متفاوت می‌دهد. generate دوباره و مقایسهٔ دو رشته روش بررسی رمز نیست؛ verify را اجرا کنید.</p>
+<table>
+<thead>
+<tr>
+<th>نکته</th>
+<th>نتیجه</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>salt تصادفی</td>
+<td>hash رمز یکسان لزوماً یکسان نیست</td>
+</tr>
+<tr>
+<td dir="ltr">cost</td>
+<td>کار محاسباتی بررسی رمز</td>
+</tr>
+<tr>
+<td>hash نامعتبر</td>
+<td>verify موجود پروژه false می‌دهد</td>
+</tr>
+<tr>
+<td>سقف BCrypt</td>
+<td>72 بایت ورودی، نه 72 کاراکتر فارسی</td>
+</tr>
+<tr>
+<td>DTO امن</td>
+<td>hash نیز از پاسخ حذف شود</td>
+</tr>
+</tbody></table>
+<p>UserRequest فعلی حد طول کاراکتری دارد؛ این شرط سقف بایت UTF-8 را کنترل نمی‌کند. آموزش باید تفاوت را روشن کند، نه اینکه ورود همهٔ رمزهای چندبایتی را تضمین کند.</p>
+<p><strong>تمرین:</strong> برای یک رمز دو بار generate را در تست اجرا کنید. انتظار: خروجی متفاوت، ولی verify هر دو با رمز درست موفق و با رمز غلط ناموفق باشد. رمز واقعی را در log ننویسید.</p>
+<p><strong>فایل مطالعه:</strong> <code>core/security/BCryptPasswordHash.java</code> و تست متناظر در src/test/java.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>18 / 28</span></footer>
+    </section>
+<section class="page " id="page-19">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۱۷ HTTP Basic و Jakarta Security</h2>
+<h3>Basic چیست</h3>
+<p>client در هر درخواست هدر Authorization می‌فرستد:</p>
+<pre><code class="language-text">Authorization: Basic &lt;base64(username:password)&gt;
+</code></pre>
+<p>Base64 رمزنگاری نیست. بیرون از آزمایش محلی، انتقال credential نیازمند HTTPS است. پاک‌کردن credential حافظهٔ UI نیز به معنی خروج از هر session یا پاک‌کردن اعتبار ذخیره‌شدهٔ مرورگر نیست.</p>
+<table>
+<thead>
+<tr>
+<th>جزء</th>
+<th>مسئولیت</th>
+</tr>
+</thead>
+<tbody><tr>
+<td dir="ltr">BasicAuthenticationMechanismDefinition</td>
+<td>معرفی دریافت credential</td>
+</tr>
+<tr>
+<td dir="ltr">DatabaseIdentityStoreDefinition</td>
+<td>datasource، query رمز و query گروه‌ها</td>
+</tr>
+<tr>
+<td dir="ltr">PasswordHash</td>
+<td>تولید/بررسی hash</td>
+</tr>
+<tr>
+<td>اتصال JNDI</td>
+<td>اتصال به datasource واقعی</td>
+</tr>
+<tr>
+<td>enforcement مجوز</td>
+<td>بررسی دسترسی endpoint پس از شناخت هویت</td>
+</tr>
+</tbody></table>
+<p><strong>نمونه آموزشی معرفی Basic، نه تنظیم کامل پروژه:</strong></p>
+<pre><code class="language-java">@ApplicationScoped
+@BasicAuthenticationMechanismDefinition(
+    realmName = &quot;MftStore&quot;)
+public class SecurityConfig {
+}
+</code></pre>
+<p>این کلاس در کد فعلی نیست و به‌تنهایی identity store یا محدودیت endpoint را کامل نمی‌کند. lookup واقعی datasource باید با TomEE و تنظیمات پروژه تطبیق داده شود.</p>
+<h3>Query و scope</h3>
+<p>callerQuery برای username، hash کاربر مجاز را می‌دهد؛ groupsQuery نام گروه‌ها را برمی‌گرداند. security.sql دو view به نام realm_users و realm_user_groups دارد، اما اجرای خودکارش غیرفعال است.</p>
+<p>اگر PasswordHash سفارشی را به DatabaseIdentityStoreDefinition متصل می‌کنید، قرارداد scope آن را بررسی کنید؛ مستند Jakarta Security برای این مصرف bean با scope Dependent می‌خواهد. bean فعلی پروژه ApplicationScoped است؛ وجود آن را تنظیم نهایی login ندانید.</p>
+<p><strong>تمرین:</strong> وابستگی‌های لازم برای فعال‌سازی Basic را بنویسید. چرا seed کردن admin به‌تنهایی login را فعال نمی‌کند؟</p>
+<p><strong>مرجع:</strong> <a href="https://jakarta.ee/specifications/security/3.0/apidocs/jakarta.security/jakarta/security/enterprise/authentication/mechanism/http/basicauthenticationmechanismdefinition">Basic mechanism</a> و <a href="https://jakarta.ee/specifications/security/3.0/apidocs/jakarta.security/jakarta/security/enterprise/identitystore/databaseidentitystoredefinition">Identity Store</a>.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>19 / 28</span></footer>
+    </section>
+<section class="page " id="page-20">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۱۸ مجوزها و آزمون امنیت</h2>
+<h3>annotation قرارداد را بیان می‌کند</h3>
+<p><strong>مثال سیاست API پیوست، به‌صورت کوتاه:</strong></p>
+<pre><code class="language-java">@RolesAllowed(&quot;admin&quot;)
+public class AttachmentApi {
+    @GET
+    @PermitAll
+    public List&lt;AttachmentDto&gt; getAttachments() {
+        return attachmentService.findAll();
+    }
+}
+</code></pre>
+<p>در مکانیزم انتخاب‌شده، annotation متد نسبت به کلاس در نظر گرفته شود. اجرای سیاست روی CDI REST باید تنظیم و با HTTP آزمایش شود؛ روی service یا UI به‌تنهایی اجراشده فرض نکنید.</p>
+<h3>ماتریس آزمون بعد از تکمیل زیرساخت</h3>
+<table>
+<thead>
+<tr>
+<th>درخواست</th>
+<th>هویت</th>
+<th>انتظار سیاست</th>
+</tr>
+</thead>
+<tbody><tr>
+<td dir="ltr">GET metadata</td>
+<td>ناشناس</td>
+<td dir="ltr">200</td>
+</tr>
+<tr>
+<td dir="ltr">POST metadata</td>
+<td>بدون اعتبار</td>
+<td dir="ltr">401</td>
+</tr>
+<tr>
+<td dir="ltr">POST metadata</td>
+<td>معتبر، بدون admin</td>
+<td dir="ltr">403</td>
+</tr>
+<tr>
+<td dir="ltr">POST metadata</td>
+<td>admin و ورودی معتبر</td>
+<td dir="ltr">201</td>
+</tr>
+<tr>
+<td dir="ltr">PUT content</td>
+<td>معتبر، بدون attachment:file</td>
+<td dir="ltr">403</td>
+</tr>
+<tr>
+<td dir="ltr">GET content</td>
+<td>مجاز، فایل ناموجود</td>
+<td dir="ltr">404</td>
+</tr>
+<tr>
+<td>عملیات محافظت‌شده</td>
+<td>credential نامعتبر</td>
+<td>رد احراز هویت</td>
+</tr>
+</tbody></table>
+<p>این جدول <strong>انتظار آزمون</strong> است، نه نتیجهٔ اجرای فعلی.</p>
+<h3>اشتباه‌های خطرناک</h3>
+<ul>
+<li>مخفی‌کردن دکمهٔ حذف، امنیت endpoint نیست.</li>
+<li>safeJson در UI جای حذف hash از response backend نیست.</li>
+<li>DTO سفارش فعلی User دارد؛ دادهٔ حساس پیش از انتشار حذف شود.</li>
+<li>userId دلخواه client هویت تأییدشده نیست؛ عملیات حساس باید به principal معتبر مرتبط شوند.</li>
+<li>admin/admin123 و user/user123 در SQL فقط نمونه‌اند؛ seed فعلی اجرا نمی‌شود.</li>
+</ul>
+<p><strong>تمرین:</strong> آزمونی طراحی کنید که user عادی مستقیماً DELETE API را فراخوانی کند، حتی اگر دکمه دیده نشود.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>20 / 28</span></footer>
+    </section>
+<section class="page " id="page-21">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۱۹ Attachment و جریان فایل</h2>
+<h3>دو درخواست به‌جای قرارداد سنگین</h3>
+<p>پیوست ابتدا metadata و سپس محتوا می‌گیرد. body محتوا raw bytes است، نه multipart یا JSON.</p>
+<p><strong>نمونه POST /api/v1/attachments:</strong></p>
+<pre><code class="language-json">{
+  &quot;ownerType&quot;: &quot;PRODUCT&quot;,
+  &quot;ownerId&quot;: 5,
+  &quot;title&quot;: &quot;Product photo&quot;,
+  &quot;fileName&quot;: &quot;photo.jpg&quot;,
+  &quot;description&quot;: &quot;Sample for class&quot;
+}
+</code></pre>
+<p>نمونه آموزشی است؛ وجود Product شماره 5 در Attachment بررسی نمی‌شود. id پیوست ساخته‌شده از <code>data.id</code> پاسخ گرفته می‌شود.</p>
+<table>
+<thead>
+<tr>
+<th>مرحله</th>
+<th>عملیات</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ساخت metadata</td>
+<td dir="ltr">POST /attachments</td>
+</tr>
+<tr>
+<td>ارسال bytes</td>
+<td dir="ltr">PUT /attachments/{id}/content</td>
+</tr>
+<tr>
+<td>دریافت bytes</td>
+<td dir="ltr">GET /attachments/{id}/content</td>
+</tr>
+<tr>
+<td>حذف نرم metadata</td>
+<td dir="ltr">DELETE /attachments/{id}</td>
+</tr>
+</tbody></table>
+<p>FileStorage نام UUID می‌سازد؛ نام disk با fileName ارسالی یکی نیست. Files.copy با InputStream اندازه را حساب می‌کند. پوشه بیرون از WAR است و STORE_UPLOAD_DIR آن را تعیین می‌کند.</p>
+<p><strong>نمونه ارسال فایل پس از گرفتن id:</strong></p>
+<pre><code class="language-powershell">$uploadUrl = &quot;http://localhost:8080/api/v1/attachments/1/content&quot;
+curl.exe -X PUT $uploadUrl -H &quot;Content-Type: image/jpeg&quot; --data-binary &quot;@photo.jpg&quot;
+</code></pre>
+<p>بعد از فعال‌سازی امنیت، credential مجاز هم لازم است. فرمان وجود فایل یا id شماره 1 را تضمین نمی‌کند.</p>
+<h3>مرز transaction</h3>
+<p>disk بخشی از transaction database نیست. ذخیرهٔ فایل موفق با commit ناموفق می‌تواند فایل یتیم بسازد. آپلود مجدد و حذف نرم نیز فایل قبلی را پاک نمی‌کنند.</p>
+<p>کنترل حجم، اسکن و پاک‌سازی خارج از دامنهٔ مثال‌اند. Content-Type از client می‌آید و تأیید واقعی محتوای فایل نیست.</p>
+<p><strong>تمرین:</strong> چرا InputStream دانلود نباید در ApiResponse قرار گیرد؟</p>
+</main>
+        <footer><span>احمد مصباح</span><span>21 / 28</span></footer>
+    </section>
+<section class="page " id="page-22">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۲۰ مستندسازی با OpenAPI</h2>
+<h3>قرارداد API قابل مشاهده باشد</h3>
+<p>OpenAPI مسیر، method، پارامتر، schema و پاسخ را توصیف می‌کند. Swagger UI نمایش و آزمایش قرارداد است؛ جای اجرای service، مجوز یا validation را نمی‌گیرد.</p>
+<p>سند attachments-openapi.json ثابت است و از annotationهای Java تولید نمی‌شود.</p>
+<p><strong>نمونه آموزشی ساختار سند:</strong></p>
+<pre><code class="language-yaml">openapi: 3.0.3
+info:
+  title: Attachment API
+  version: &quot;1.0&quot;
+servers:
+  - url: ../api/v1
+paths:
+  /attachments/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        &quot;200&quot;:
+          description: Attachment metadata
+        &quot;404&quot;:
+          description: Attachment not found
+</code></pre>
+<p>نمونه برای فهم ساختار است؛ سند پروژه schemaهای دقیق‌تر پاسخ، خطا و محتوا دارد.</p>
+<h3>هنگام تغییر کد</h3>
+<p>مسیر/method، DTO، required و حدود طول، enum مالک، status، نوع فایل و پوشش مشترک باید هماهنگ بمانند. server نسبی <code>../api/v1</code> نسبت به محل سند resolve می‌شود.</p>
+<p>صفحه <code>/docs/index.html</code> و فایل <code>/docs/attachments-openapi.json</code> هستند. Swagger UI از CDN می‌آید و validator خارجی این مثال غیرفعال است.</p>
+<p><strong>تمرین:</strong> فرق 404 «پیوست نیست» و «فایل ندارد» را در قرارداد توضیح دهید.</p>
+<p><strong>مرجع:</strong> <a href="https://spec.openapis.org/oas/v3.0.3.html">OpenAPI 3.0.3</a>.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>22 / 28</span></footer>
+    </section>
+<section class="page " id="page-23">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۲۱ UI سبک و fetch مشترک</h2>
+<h3>زیرساخت کوچک به‌جای fetch تکراری</h3>
+<p>UI از همان WAR ارائه می‌شود. Bootstrap RTL ظاهر پایه را می‌دهد.</p>
+<table>
+<thead>
+<tr>
+<th>فایل</th>
+<th>مسئولیت</th>
+</tr>
+</thead>
+<tbody><tr>
+<td dir="ltr">core/api.js</td>
+<td>request، query، JSON، خطا و فایل</td>
+</tr>
+<tr>
+<td dir="ltr">core/ui.js</td>
+<td>DOM، فرم و تبدیل مقدار</td>
+</tr>
+<tr>
+<td dir="ltr">modules.js</td>
+<td>منابع، فیلدها، ستون‌ها و actionها</td>
+</tr>
+<tr>
+<td dir="ltr">app.js</td>
+<td>navigation و اتصال اجزای مشترک</td>
+</tr>
+</tbody></table>
+<p><strong>استفاده از API موجود، در ماژولی دارای api importشده:</strong></p>
+<pre><code class="language-javascript">const departments = await api.get(&quot;departments&quot;, {
+    branchId: 1
+});
+
+const created = await api.post(&quot;departments&quot;, {
+    branchId: 1,
+    name: &quot;Sales&quot;,
+    code: &quot;SALES&quot;,
+    description: &quot;&quot;
+});
+</code></pre>
+<p>get، query را در آرگومان دوم می‌گیرد. زیرساخت data را جدا می‌کند؛ صفحه نباید دوباره پوشش پاسخ را باز کند.</p>
+<h3>نمایش دادهٔ غیرقابل اعتماد</h3>
+<pre><code class="language-javascript">const cell = document.createElement(&quot;td&quot;);
+cell.textContent = department.name;
+</code></pre>
+<p>این نمونه در context دارای department معتبر است. دادهٔ API را به شکل متن نمایش دهید؛ HTML آن را با innerHTML اجرا نکنید.</p>
+<p>credential Basic فقط در حافظه است و فرم، login واقعی server نیست. جست‌وجو فقط روی ردیف‌های بارگذاری‌شده است. مالی readOnly است چون backend آن کامل نیست.</p>
+<p>۲۵ منبع در ۹ گروه تعریف شده‌اند؛ وجود فرم به معنی آماده‌بودن service نیست. تغییر DTO یا مسیر باید به metadata UI هم منتقل شود.</p>
+<p><strong>تمرین:</strong> یک منبع جدید با path، fields، columns و paged تعریف کنید؛ زیرساخت fetch تازه نسازید.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>23 / 28</span></footer>
+    </section>
+<section class="page " id="page-24">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۲۲ Docker و تنظیمات اجرا</h2>
+<h3>سه سرویس محلی</h3>
+<p>Compose برنامه، PostgreSQL 18.6 و Redis را اجرا می‌کند. Dockerfile با Maven/JDK 17، WAR می‌سازد و روی TomEE 10.2.0 اجرا می‌کند.</p>
+<pre><code class="language-text">Browser --&gt; localhost:8080 --&gt; app / TomEE
+                                |
+                         +------+------+
+                         |             |
+                      db:5432      redis:6379
+</code></pre>
+<p>localhost داخل container به خودش اشاره می‌کند؛ برنامه برای database از db و برای کش از redis استفاده می‌کند.</p>
+<h3>راه‌اندازی اولیه</h3>
+<pre><code class="language-powershell">Copy-Item .env.example .env
+docker compose up --build -d
+docker compose ps
+docker compose logs --tail 100 app
+</code></pre>
+<p>Copy-Item فقط برای فایل محیط تازه است؛ .env موجود را بازنویسی نکنید. رمز نمونه را تغییر دهید. Engine باید روشن باشد؛ نبودن STORE_DB_PASSWORD خطای Compose می‌دهد.</p>
+<table>
+<thead>
+<tr>
+<th>تنظیم</th>
+<th>کاربرد</th>
+</tr>
+</thead>
+<tbody><tr>
+<td dir="ltr">STORE_DB_URL / USER / PASSWORD</td>
+<td>اتصال برنامه</td>
+</tr>
+<tr>
+<td dir="ltr">STORE_DB_NAME</td>
+<td>نام database در Compose</td>
+</tr>
+<tr>
+<td dir="ltr">STORE_REDIS_HOST / PORT</td>
+<td>پیش‌فرض محلی localhost:6379</td>
+</tr>
+<tr>
+<td dir="ltr">STORE_UPLOAD_DIR</td>
+<td>مسیر فایل؛ داخل Compose /data/uploads</td>
+</tr>
+<tr>
+<td dir="ltr">POSTGRES_PORT / REDIS_PORT / APP_PORT</td>
+<td>پورت میزبان، نه پورت داخلی</td>
+</tr>
+</tbody></table>
+<h3>هشدار داده</h3>
+<p>Hibernate فعلاً create-drop دارد. volume، حذف جدول توسط Hibernate را متوقف نمی‌کند. فایل‌ها volume جدا دارند؛ Redis موقت است.</p>
+<p>docker compose down، volume را نگه می‌دارد. گزینه -v، volume و دادهٔ آن را حذف می‌کند؛ بدون نیاز آن را اجرا نکنید.</p>
+<p>Healthcheck موجود برای db و Redis است؛ سلامت آن‌ها deploy سالم app را ثابت نمی‌کند.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>24 / 28</span></footer>
+    </section>
+<section class="page " id="page-25">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۲۳ تست و تشخیص خطا</h2>
+<h3>هر تست چه چیزی را می‌سنجد</h3>
+<table>
+<thead>
+<tr>
+<th>نوع</th>
+<th>بررسی</th>
+<th>تأیید نمی‌کند</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>entity/repository با H2</td>
+<td>mapping و query</td>
+<td>همه تفاوت‌های PostgreSQL</td>
+</tr>
+<tr>
+<td>mapper مستقیم</td>
+<td>تبدیل و حفظ فیلد</td>
+<td>Lazy یا CDI سرور</td>
+</tr>
+<tr>
+<td>service با Mockito</td>
+<td>قواعد و فراخوانی</td>
+<td>commit واقعی JTA</td>
+</tr>
+<tr>
+<td>REST مستقیم</td>
+<td>DTO و status متد</td>
+<td>filter و authentication واقعی</td>
+</tr>
+<tr>
+<td>storage با پوشه موقت</td>
+<td>bytes و فایل</td>
+<td>مجوز HTTP و حجم</td>
+</tr>
+<tr>
+<td>HTTP روی TomEE</td>
+<td dir="ltr">integration</td>
+<td>همه سناریوهای هم‌زمانی</td>
+</tr>
+</tbody></table>
+<h3>نتیجه ثبت‌شده در ۲۰۲۶/۱۰/۱۳</h3>
+<p>۵۴ تست اجرا شد: ۳۰ Attachment و ۶ Core موفق؛ ۱۸ تست entity انبار ناموفق، با ۲ failure و ۱۶ error. testPU فقط Attachment را ثبت کرده و exclude-unlisted-classes=true دارد.</p>
+<pre><code class="language-powershell">.\mvnw.cmd -B -ntp test
+.\mvnw.cmd -B -ntp -DskipTests package
+</code></pre>
+<p>فرمان دوم WAR ساخت، ولی تست را اجرا نکرد. این نتیجه deploy، کش، OpenAPI یا browser را تأیید نمی‌کند. هشدار مقدار اولیهٔ Delivery.status در builder نیز باقی است.</p>
+<h3>ترتیب عیب‌یابی</h3>
+<p>۱. <strong>Compile:</strong> import، processor و کد تولیدشده.<br>۲. <strong>Deploy:</strong> خطای CDI/JNDI/datasource در log سرور.<br>۳. <strong>400:</strong> DTO و validation.<br>۴. <strong>404:</strong> مسیر و id.<br>۵. <strong>409:</strong> قاعدهٔ business.<br>۶. <strong>500:</strong> stack trace، Lazy و متدهای stub.</p>
+<p>برای entity تازه، وابستگی‌هایش نیز در persistence تست ثبت شوند. وجود فایل تست به معنی وجود method دارای Test نیست.</p>
+<p><strong>تمرین:</strong> چرا ثبت‌نشدن Inventory، اثبات خرابی محاسبهٔ موجودی نیست؟</p>
+</main>
+        <footer><span>احمد مصباح</span><span>25 / 28</span></footer>
+    </section>
+<section class="page " id="page-26">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۲۴ کارگاه ساخت یک ماژول تمیز</h2>
+<h3>ترتیب پیشنهادی تحویل</h3>
+<table>
+<thead>
+<tr>
+<th>مرحله</th>
+<th>خروجی</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>۱ مدل</td>
+<td>entity، رابطه، ستون و enum</td>
+</tr>
+<tr>
+<td>۲ داده</td>
+<td>repository و finder</td>
+</tr>
+<tr>
+<td>۳ قرارداد</td>
+<td>Request و DTO بدون entity</td>
+</tr>
+<tr>
+<td>۴ تبدیل</td>
+<td>mapper با mapping رابطه</td>
+</tr>
+<tr>
+<td>۵ business</td>
+<td>service، transaction و exception</td>
+</tr>
+<tr>
+<td>۶ API</td>
+<td>CRUD، paging و عملیات ویژه</td>
+</tr>
+<tr>
+<td>۷ آزمون</td>
+<td>حالت درست، validation، نبودن و تعارض</td>
+</tr>
+<tr>
+<td>۸ اتصال</td>
+<td>metadata UI و مستند قرارداد</td>
+</tr>
+</tbody></table>
+<h3>سناریوی تمرین دپارتمان</h3>
+<p>برای شعبهٔ موجود، نام و کد معتبر بفرستید. همان کد در همان شعبه را دوباره بفرستید؛ انتظار BusinessException داشته باشید. سپس id ناموجود را بخوانید و 404 را با خطای ورودی اشتباه نگیرید.</p>
+<p>Request، branchId می‌گیرد. service شعبهٔ واقعی را می‌خواند؛ mapper branch/status/employees را از ورودی نمی‌گیرد. وضعیت action جدا و کارمند مسیر membership دارد.</p>
+<h3>مواردی که باید از تحویل حذف شوند</h3>
+<ul>
+<li>متد نمایشی که همیشه null یا Optional خالی می‌دهد.</li>
+<li>entity یا password/hash در پاسخ JSON.</li>
+<li>محاسبهٔ مبلغ یا فیلد server-owned از client.</li>
+<li>query با چسباندن ورودی کاربر.</li>
+<li>catchهای تکراری صرفاً برای پاسخ‌سازی در REST.</li>
+<li>UI که endpoint ناموجود را آماده معرفی می‌کند.</li>
+<li>annotation امنیت بدون بررسی اجرای واقعی.</li>
+</ul>
+<h3>معیار پایان</h3>
+<p>Build، تست‌های اصلی، deploy سالم و یک دور API واقعی لازم‌اند. برای کش، hit/miss، commit/rollback و قطعی بررسی شود.</p>
+<p>framework فرانت‌اند، JWT، کش چندلایه و generic framework تازه لازم نیست؛ service خوانا و قرارداد روشن برای این درس مناسب‌تر است.</p>
+<p><strong>تمرین پایانی:</strong> «ویرایش دپارتمان و خواندن مجدد از Redis» را از UI تا observer commit توضیح دهید.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>26 / 28</span></footer>
+    </section>
+<section class="page " id="page-27">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۲۵ پرسش‌های مرور و پاسخ</h2>
+<h3>ابتدا بدون نگاه به پاسخ جواب دهید</h3>
+<table>
+<thead>
+<tr>
+<th>پرسش</th>
+<th>پاسخ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>چرا entity در DTO نباشد؟</td>
+<td>Lazy، رابطه، حلقه JSON و دادهٔ حساس ممکن است منتشر شود</td>
+</tr>
+<tr>
+<td>mapper مسئول بارگذاری Branch است؟</td>
+<td>نه؛ service آن را می‌خواند و قواعد را اجرا می‌کند</td>
+</tr>
+<tr>
+<td>build موفق یعنی mapping کامل؟</td>
+<td>نه؛ IGNORE می‌تواند فیلد بدون mapping را پنهان کند</td>
+</tr>
+<tr>
+<td>MappingTarget چه می‌کند؟</td>
+<td>تغییر entity موجود، نه ساخت نمونهٔ تازه</td>
+</tr>
+<tr>
+<td>read همیشه بدون transaction است؟</td>
+<td>نه؛ تبدیل رابطهٔ Lazy ممکن است context بخواهد</td>
+</tr>
+<tr>
+<td>چرا DTO کش شود؟</td>
+<td>داده ساده، بدون proxy و وابستگی JPA</td>
+</tr>
+<tr>
+<td>TTL به‌تنهایی کافی است؟</td>
+<td>نه؛ update ابطال می‌خواهد و race ممکن است</td>
+</tr>
+<tr>
+<td>چرا AFTER_SUCCESS؟</td>
+<td>ابطال وابسته به commit موفق است</td>
+</tr>
+<tr>
+<td>Basic رمزنگاری است؟</td>
+<td>نه؛ encoding است و انتقال امن لازم است</td>
+</tr>
+<tr>
+<td>hashها را مقایسه کنیم؟</td>
+<td>نه؛ salt متفاوت است و verify لازم است</td>
+</tr>
+<tr>
+<td>RolesAllowed یعنی امنیت فعال؟</td>
+<td>نه؛ mechanism و enforcement باید بررسی شوند</td>
+</tr>
+<tr>
+<td>volume مانع create-drop است؟</td>
+<td>نه؛ Hibernate جدول داخل database را حذف می‌کند</td>
+</tr>
+</tbody></table>
+<h3>تمرین‌های تشریحی</h3>
+<p><strong>الف:</strong> Redis قطع است و update موفق می‌شود. پس از اتصال چه داده‌ای ممکن است خوانده شود؟<br><strong>پاسخ:</strong> اگر ابطال از دست برود، کلید قدیمی ممکن است تا پایان expiry دیده شود.</p>
+<p><strong>ب:</strong> mapper، branch.name می‌خواند ولی context بسته است.<br><strong>پاسخ:</strong> خواندن و تبدیل DTO داخل مرز transactional معتبر انجام شود؛ ignore کردن relation پاسخ درست نمی‌سازد.</p>
+<p><strong>ج:</strong> دکمهٔ حذف برای user مخفی است.<br><strong>پاسخ:</strong> server باید مجوز endpoint را بررسی کند؛ client قابل اعتماد نیست.</p>
+<p><strong>د:</strong> quantity با مجموع گردش‌ها متفاوت است.<br><strong>پاسخ:</strong> ورودی، تغییر مستقیم quantity، transaction اتمیک و تداخل هم‌زمان بررسی شود؛ فقط UI را اصلاح نکنید.</p>
+</main>
+        <footer><span>احمد مصباح</span><span>27 / 28</span></footer>
+    </section>
+<section class="page " id="page-28">
+        <header><span>Jakarta EE · MftOnlineStoreEE</span><span>جزوه آموزشی پروژه فروشگاه</span></header>
+        <main><h2>۲۶ واژه‌نامه و منابع مطالعه</h2>
+<table>
+<thead>
+<tr>
+<th>واژه</th>
+<th>معنی</th>
+</tr>
+</thead>
+<tbody><tr>
+<td dir="ltr">Container</td>
+<td>محیط اجرای مدیریت‌شده</td>
+</tr>
+<tr>
+<td dir="ltr">Bean / CDI</td>
+<td>شیء مدیریت‌شده و تزریق وابستگی</td>
+</tr>
+<tr>
+<td dir="ltr">Entity / DTO</td>
+<td>مدل پایدار / قرارداد تبادل</td>
+</tr>
+<tr>
+<td dir="ltr">Persistence Context</td>
+<td>مجموعهٔ entityهای managed</td>
+</tr>
+<tr>
+<td dir="ltr">Commit / Rollback</td>
+<td>نهایی‌کردن / برگرداندن تغییر</td>
+</tr>
+<tr>
+<td dir="ltr">Dirty Checking</td>
+<td>تشخیص تغییر entity managed</td>
+</tr>
+<tr>
+<td dir="ltr">Lazy</td>
+<td>بارگذاری رابطه هنگام نیاز</td>
+</tr>
+<tr>
+<td dir="ltr">Hit / Miss</td>
+<td>یافتن / نیافتن داده در کش</td>
+</tr>
+<tr>
+<td dir="ltr">Principal / Role</td>
+<td>هویت معتبر / گروه دسترسی</td>
+</tr>
+<tr>
+<td dir="ltr">WAR</td>
+<td>بستهٔ deploy برنامهٔ وب</td>
+</tr>
+</tbody></table>
+<h3>فایل‌های مطالعه در پروژه</h3>
+<p>مسیرها نسبت به package اصلی در src/main/java هستند:</p>
+<ul>
+<li><code>core/entity/BaseEntity.java</code> و <code>core/repository/BaseRepository.java</code></li>
+<li><code>core/mapper/BaseMapper.java</code> و <code>MapStructConfig.java</code></li>
+<li><code>organization/mapper/DepartmentMapper.java</code></li>
+<li><code>organization/cache/RedisDtoCache.java</code> و <code>DepartmentDtoLoader.java</code></li>
+<li><code>core/security/BCryptPasswordHash.java</code></li>
+<li><code>attachments/rest/AttachmentApi.java</code> و <code>attachments/storage/FileStorage.java</code></li>
+</ul>
+<h3>منابع رسمی</h3>
+<p>۱. <a href="https://jakarta.ee/specifications/platform/10/">Jakarta EE 10</a> و <a href="https://jakarta.ee/specifications/cdi/4.0/">CDI 4.0</a><br>۲. <a href="https://jakarta.ee/specifications/persistence/3.1/">Persistence 3.1</a> و <a href="https://jakarta.ee/specifications/transactions/2.0/">Transactions 2.0</a><br>۳. <a href="https://mapstruct.org/documentation/1.6/reference/html/">MapStruct 1.6</a><br>۴. <a href="https://redis.io/docs/latest/develop/use-cases/cache-aside/">Redis Cache Aside</a> و <a href="https://redis.io/docs/latest/commands/keys/">KEYS</a><br>۵. <a href="https://jakarta.ee/specifications/security/3.0/">Security 3.0</a> و <a href="https://jakarta.ee/learn/docs/jakartaee-tutorial/current/security/security.html">آموزش Security</a><br>۶. <a href="https://spec.openapis.org/oas/v3.0.3.html">OpenAPI 3.0.3</a></p>
+<p>متن، تمرین و شرح مثال‌های پروژه برای این جزوه تدوین شده‌اند؛ منابع رسمی برای مطالعهٔ بیشترند. نمونهٔ آموزشی جای تکمیل و آزمون کد را نمی‌گیرد.</p>
+<p><strong>تهیه و تدوین احمد مصباح</strong></p>
+</main>
+        <footer><span>احمد مصباح</span><span>28 / 28</span></footer>
+    </section></body>
+</html>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <Resource id="PostgresDS" type="DataSource">
+        DataSourceCreator = com.mftplus.mftonlinestoreee.integration.tomee.HikariDataSourceCreator
+        JtaManaged = true
+
+        JdbcDriver = org.postgresql.Driver
+        JdbcUrl = ${STORE_DB_URL:-jdbc:postgresql://localhost:5432/store_db}
+        UserName = ${STORE_DB_USER:-store_user}
+        Password = ${STORE_DB_PASSWORD:-store_dev_password}
+
+        maximumPoolSize = 20
+        minimumIdle = 5
+        connectionTimeout = 10000
+        idleTimeout = 600000
+    </Resource>
+
+    <Resource id="PostgresNonJtaDS" type="DataSource">
+        DataSourceCreator = com.mftplus.mftonlinestoreee.integration.tomee.HikariDataSourceCreator
+        JtaManaged = false
+
+        JdbcDriver = org.postgresql.Driver
+        JdbcUrl = ${STORE_DB_URL:-jdbc:postgresql://localhost:5432/store_db}
+        UserName = ${STORE_DB_USER:-store_user}
+        Password = ${STORE_DB_PASSWORD:-store_dev_password}
+
+        maximumPoolSize = 3
+        minimumIdle = 0
+        connectionTimeout = 10000
+        idleTimeout = 600000
+    </Resource>
+</resources>

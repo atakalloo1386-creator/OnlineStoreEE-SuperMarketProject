@@ -1,0 +1,21 @@
+body { background: #f6f7f9; font-family: Tahoma, Arial, sans-serif; color: #263141; font-size: .9rem; }
+.brand { font-size: 1.1rem; font-weight: 700; }
+.module-nav { display: flex; flex-direction: column; gap: .25rem; }
+.module-nav .nav-group { margin-top: .85rem; font-size: .75rem; color: #6c757d; }
+.module-nav a { color: #4d5968; padding: .5rem .7rem; border-radius: .35rem; text-decoration: none; }
+.module-nav a:hover { background: #e9edf3; }
+.module-nav a[aria-current="page"] { color: #0d6efd; background: #eaf1ff; font-weight: 700; }
+.search-input { max-width: 340px; }
+.table th { font-size: .8rem; white-space: nowrap; }
+.table td { padding: .8rem; max-width: 250px; overflow-wrap: anywhere; }
+.table .cell-value { display: block; max-width: 240px; white-space: pre-wrap; }
+.row-actions { min-width: 180px; display: flex; flex-wrap: wrap; gap: .35rem; }
+.form-dialog { border: 1px solid #dee2e6; border-radius: .5rem; padding: 0; width: min(720px, 95vw); max-height: 90vh; }
+.form-dialog::backdrop { background: rgba(24, 32, 44, .35); }
+.form-dialog pre { direction: ltr; text-align: left; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 50vh; overflow: auto; }
+.form-control, .form-select, .btn { font-size: .85rem; }
+textarea.code-input { font-family: Consolas, monospace; direction: ltr; text-align: left; }
+[hidden] { display: none !important; }
+@media (max-width: 991px) {
+    .module-nav { max-height: 240px; overflow-y: auto; background: white; padding: .75rem; border: 1px solid #dee2e6; border-radius: .5rem; }
+}
